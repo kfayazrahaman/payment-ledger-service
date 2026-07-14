@@ -354,7 +354,6 @@ Ensure backend is running on port 4000 before starting frontend.
 - [Double-Entry Accounting](https://en.wikipedia.org/wiki/Double-entry_bookkeeping)
 - [GraphQL Documentation](https://graphql.org/learn/)
 - [React Documentation](https://react.dev/)
-- [SQLite Documentation](https://www.sqlite.org/docs.html)
 
 ## 👤 Author
 
