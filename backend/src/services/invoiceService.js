@@ -21,7 +21,7 @@ export async function createInvoice(
     const invoice = await Invoice.create({
       invoiceNumber: invoiceNumber?.trim()?.toUpperCase(),
       accountId,
-      dueDate: dueDate ? new Date(dueDate) : "",
+      dueDate: dueDate ? new Date(dueDate) : null,
       totalCents: Math.floor(totalCents || 0),
       paidCents: 0,
       status: 'DRAFT',

@@ -63,7 +63,7 @@ export const resolvers = {
           name: acc.name,
           type: acc.type,
           balance: 0, // Will be populated by field resolver
-          createdAt: acc?.createdAt,
+          createdAt: acc?.createdAt.toISOString(),
         }));
       } catch (error) {
         console.error("Error fetching accounts:", error);
@@ -85,7 +85,7 @@ export const resolvers = {
           name: account.name,
           type: account.type,
           balance: 0, // Will be populated by field resolver
-          createdAt: account.createdAt,
+          createdAt: account.createdAt ? account.createdAt.toISOString() : new Date().toISOString(),
         };
       } catch (error) {
         console.error("Error fetching account:", error);
@@ -108,7 +108,7 @@ export const resolvers = {
           creditAccount: t?.creditAccountId?._id.toString(),
           amount: t.amountCents, // Mongoose uses amountCents, GraphQL expects amount
           description: t.description,
-          createdAt: t.createdAt,
+          createdAt: t.createdAt ? t.createdAt.toISOString() : new Date().toISOString(),
         }));
       } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -128,9 +128,9 @@ export const resolvers = {
           id: transaction._id.toString(),
           debitAccountId: transaction?.debitAccountId?._id.toString(),
           creditAccountId: transaction?.creditAccountId?._id.toString(),
-          amount: transaction.amountCents,
-          description: transaction.description,
-          createdAt: transaction.createdAt,
+          amount: transaction?.amountCents,
+          description: transaction?.description,
+          createdAt: transaction?.createdAt?.toISOString(),
         };
       } catch (error) {
         console.error("Error fetching transaction:", error);
@@ -140,24 +140,24 @@ export const resolvers = {
 
     /**
      * Query: Get all invoices, optionally filtered by status
-     */
+     */ 
     invoices: async (_, { status }) => {
       try {
         const invoices = await getAllInvoices(status);
         return invoices.map((inv) => ({
           id: inv._id.toString(),
           invoiceNumber: inv.invoiceNumber,
-          account: toGraphQLAccount(inv?.accountId, inv?.createdAt),
+          account: toGraphQLAccount(inv?.accountId, inv?.createdAt.toISOString()),
           status: inv.status,
           lineItems: [], // Will be populated by field resolver
-          dueDate: inv.dueDate ? new Date(inv.dueDate) : null,
+          dueDate: inv?.dueDate ? new Date(inv.dueDate).toISOString() : null,
           total: toSafeInt(inv?.totalCents ?? inv?.total ?? 0),
           paid: toSafeInt(inv?.paidCents ?? inv?.paid ?? 0),
           remaining:
             toSafeInt(inv?.totalCents ?? inv?.total ?? 0) -
             toSafeInt(inv?.paidCents ?? inv?.paid ?? 0),
-          createdAt: inv.createdAt,
-          updatedAt: inv.updatedAt,
+          createdAt: inv?.createdAt.toISOString(),
+          updatedAt: inv?.updatedAt.toISOString(),
         }));
       } catch (error) {
         console.error("Error fetching invoices:", error);
@@ -175,18 +175,18 @@ export const resolvers = {
 
         return {
           id: invoice._id.toString(),
-          invoiceNumber: invoice.invoiceNumber,
-          account: toGraphQLAccount(invoice?.accountId, invoice?.createdAt),
+          invoiceNumber: invoice?.invoiceNumber,
+          account: toGraphQLAccount(invoice?.accountId, invoice?.createdAt.toISOString()),
           status: invoice.status,
           lineItems: [], // Will be populated by field resolver
-          dueDate: invoice.dueDate ? new Date(invoice.dueDate) : null,
+          dueDate: invoice?.dueDate,
           total: toSafeInt(invoice?.totalCents ?? invoice?.total ?? 0),
           paid: toSafeInt(invoice?.paidCents ?? invoice?.paid ?? 0),
           remaining:
             toSafeInt(invoice?.totalCents ?? invoice?.total ?? 0) -
             toSafeInt(invoice?.paidCents ?? invoice?.paid ?? 0),
-          createdAt: invoice.createdAt,
-          updatedAt: invoice.updatedAt,
+          createdAt: invoice?.createdAt.toISOString(),
+          updatedAt: invoice?.updatedAt.toISOString(),
         };
       } catch (error) {
         console.error("Error fetching invoice:", error);
@@ -201,11 +201,11 @@ export const resolvers = {
       try {
         const payments = await getPaymentsForInvoice(invoiceId);
         return payments.map((p) => ({
-          id: p._id.toString(),
-          invoiceId: p.invoiceId.toString(),
-          amount: p.amountCents,
-          status: p.status,
-          createdAt: p.createdAt,
+          id: p?._id.toString(),
+          invoiceId: p?.invoiceId.toString(),
+          amount: p?.amountCents,
+          status: p?.status,
+          createdAt: p?.createdAt.toISOString(),
         }));
       } catch (error) {
         console.error("Error fetching payments:", error);
@@ -229,11 +229,11 @@ export const resolvers = {
 
         return {
           account: {
-            id: account._id.toString(),
-            name: account.name,
-            type: account.type,
+            id: account?._id.toString(),
+            name: account?.name,
+            type: account?.type,
             balance: balance,
-            createdAt: account.createdAt,
+            createdAt: account?.createdAt ? account.createdAt.toISOString() : new Date().toISOString(),
           },
           balance: balance,
         };
@@ -256,7 +256,7 @@ export const resolvers = {
           name: account.name,
           type: account.type,
           balance: 0,
-          createdAt: account?.createdAt,
+          createdAt: account?.createdAt ? account.createdAt.toISOString() : new Date().toISOString(),
         };
       } catch (error) {
         console.error("Error creating account:", error);
@@ -460,7 +460,7 @@ export const resolvers = {
           name: account.name,
           type: account.type,
           balance: 0,
-          createdAt: account.createdAt,
+          createdAt: account.createdAt ? account.createdAt.toISOString() : new Date().toISOString(),
         };
       } catch (error) {
         console.error("Error fetching debit account:", error);
@@ -481,7 +481,7 @@ export const resolvers = {
           name: account.name,
           type: account.type,
           balance: 0,
-          createdAt: account.createdAt,
+          createdAt: account.createdAt ? account.createdAt.toISOString() : new Date().toISOString(),
         };
       } catch (error) {
         console.error("Error fetching credit account:", error);
@@ -551,7 +551,7 @@ export const resolvers = {
       }
     },
 
-    dueDate: (invoice) => (invoice?.dueDate ? new Date(invoice?.dueDate) : null),
+    dueDate: (invoice) => (invoice?.dueDate ? new Date(invoice.dueDate).toISOString() : null),
     total: (invoice) => toSafeInt(invoice?.total ?? invoice?.totalCents ?? 0),
     paid: (invoice) => toSafeInt(invoice?.paid ?? invoice?.paidCents ?? 0),
     remaining: (invoice) => {

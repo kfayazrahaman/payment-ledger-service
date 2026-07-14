@@ -130,11 +130,11 @@ export default function AccountManager() {
           </thead>
           <tbody>
             {accounts.map((account) => (
-              <tr key={account.id}>
-                <td>{account.name}</td>
-                <td>{account.type}</td>
-                <td>${formatAmount(account.balance)}</td>
-                <td>{new Date(account.createdAt).toLocaleDateString()}</td>
+              <tr key={account?.id}>
+                <td>{account?.name}</td>
+                <td>{account?.type}</td>
+                <td>${formatAmount(account?.balance)}</td>
+                <td>{new Date(account?.createdAt).toLocaleDateString("en-US")}</td>
               </tr>
             ))}
           </tbody>

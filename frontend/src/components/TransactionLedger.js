@@ -193,8 +193,8 @@ export default function TransactionLedger() {
             {transactions.map((txn) => (
               <tr key={txn.id}>
                 <td>{new Date(txn.createdAt).toLocaleDateString()}</td>
-                <td>{txn.debitAccount.name}</td>
-                <td>{txn.creditAccount.name}</td>
+                <td>{txn.debitAccount?.name || 'Unknown'}</td>
+                <td>{txn.creditAccount?.name || 'Unknown'}</td>
                 <td>${formatAmount(txn.amount)}</td>
                 <td>{txn.description || '-'}</td>
               </tr>

@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
+import dns from "node:dns";
+
 // Load environment variables from .env file
 dotenv.config();
 
@@ -13,7 +15,11 @@ dotenv.config();
  * - Mongoose provides ORM-like functionality with schemas
  * - Supports automatic schema validation
  * - Handles connection pooling automatically
- */
+ */ 
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+console.log(dns.getServers());
 
 // Get MongoDB connection string from environment variables
 const MONGODB_URI = process.env.DB_CONNECTION_STRING;

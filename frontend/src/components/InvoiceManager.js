@@ -55,7 +55,7 @@ export default function InvoiceManager() {
       });
       setAccounts(response.data.data.accounts || []);
     } catch (err) {
-      console.error('Failed to load accounts:', err);
+      setError('Failed to load accounts: ' + (err.response?.data?.errors?.[0]?.message || err.message));
     }
   };
 
@@ -83,12 +83,7 @@ export default function InvoiceManager() {
 
     setLoading(true);
     try {
-      const lineItemsFormatted = lineItems.map(item => ({
-        description: item.description,
-        amount: parseInt(item.amount * 100)
-      }));
-
-      const lineItemsStr = JSON.stringify(lineItemsFormatted).replace(/"/g, '\\"');
+      const lineItemsArgs = lineItems.map(item => `{description: "${item.description}", amount: ${parseInt(item.amount * 100)}}`).join(', ');
 
       const response = await axios.post(API_URL, {
         query: `mutation { 
@@ -96,7 +91,7 @@ export default function InvoiceManager() {
             invoiceNumber: "${formData.invoiceNumber}"
             accountId: "${formData.accountId}"
             dueDate: "${formData.dueDate}"
-            lineItems: ${lineItemsStr}
+            lineItems: [${lineItemsArgs}]
           ) { 
             id 
             invoiceNumber 
@@ -276,7 +271,7 @@ export default function InvoiceManager() {
             {invoices.map((invoice) => (
               <tr key={invoice.id}>
                 <td>{invoice.invoiceNumber}</td>
-                <td>{invoice.account.name}</td>
+                <td>{invoice?.account?.name}</td>
                 <td><span className={getStatusClass(invoice.status)}>{invoice.status}</span></td>
                 <td>${formatAmount(invoice.total)}</td>
                 <td>${formatAmount(invoice.paid)}</td>

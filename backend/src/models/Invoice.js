@@ -29,7 +29,7 @@ const invoiceSchema = new mongoose.Schema(
 
     // When the invoice is due
     dueDate: {
-      type: String,
+      type: Date,
     },
 
     // Total invoice amount in cents (integer)
