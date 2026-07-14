@@ -49,20 +49,20 @@ export async function connectDatabase() {
     // Establish connection to MongoDB
     await mongoose.connect(MONGODB_URI, mongooseOptions);
 
-    console.log('✅ MongoDB connected successfully');
-    console.log(`📊 Database: ${mongoose.connection.db.databaseName}`);
+    console.log('MongoDB connected successfully');
+    console.log(`Database: ${mongoose.connection.db.databaseName}`);
 
     // Handle connection events
     mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️ MongoDB disconnected');
+      console.warn('MongoDB disconnected');
     });
 
     mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
+      console.error('MongoDB connection error:', err);
     });
 
   } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:', error.message);
+    console.error('Failed to connect to MongoDB:', error.message);
     // Re-throw the error so the application can handle it
     throw error;
   }
@@ -77,9 +77,9 @@ export async function connectDatabase() {
 export async function disconnectDatabase() {
   try {
     await mongoose.disconnect();
-    console.log('✅ MongoDB disconnected successfully');
+    console.log('MongoDB disconnected successfully');
   } catch (error) {
-    console.error('❌ Error disconnecting from MongoDB:', error);
+    console.error('Error disconnecting from MongoDB:', error);
     throw error;
   }
 }

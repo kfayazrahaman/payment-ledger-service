@@ -1,34 +1,4 @@
 import mongoose from 'mongoose';
-
-/**
- * Invoice Schema
- * Represents a bill or invoice sent to a customer
- * Tracks invoice status and payment progress
- * 
- * Converted from SQLite table:
- * CREATE TABLE invoices (
- *   id TEXT PRIMARY KEY,
- *   invoice_number TEXT UNIQUE NOT NULL,
- *   account_id TEXT NOT NULL,
- *   status TEXT DEFAULT 'draft',
- *   due_date DATETIME,
- *   total_cents INTEGER NOT NULL,
- *   paid_cents INTEGER DEFAULT 0,
- *   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
- *   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
- * )
- * 
- * Changes in MongoDB:
- * - invoice_number becomes invoiceNumber (camelCase)
- * - account_id becomes accountId with ObjectId reference
- * - status now uses enum for validation
- * - due_date becomes dueDate
- * - total_cents becomes totalCents (kept as integer in cents)
- * - paid_cents becomes paidCents (kept as integer in cents)
- * - Timestamps auto-managed by MongoDB
- * - Added index on invoiceNumber for uniqueness and fast lookup
- * - Added index on status for filtering invoices
- */
 const invoiceSchema = new mongoose.Schema(
   {
     // Unique invoice number (e.g., "INV-001", "INV-2024-0123")
@@ -81,12 +51,6 @@ const invoiceSchema = new mongoose.Schema(
       // Store as integer in MongoDB
       set: (v) => Math.floor(v),
     },
-
-    /**
-     * Virtual property: Remaining amount to pay
-     * Calculated as: totalCents - paidCents
-     * Not stored in database, computed on retrieval
-     */
   },
   {
     // Automatically add createdAt and updatedAt timestamps

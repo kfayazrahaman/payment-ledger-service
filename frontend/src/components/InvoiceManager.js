@@ -214,7 +214,7 @@ export default function InvoiceManager() {
         <h4 style={{ marginTop: '15px', marginBottom: '10px' }}>Line Items</h4>
 
         {lineItems.map((item, index) => (
-          <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 50px', gap: '10px', marginBottom: '10px' }}>
+          <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px', gap: '10px', marginBottom: '10px' }}>
             <input
               type="text"
               placeholder="Description"

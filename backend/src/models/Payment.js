@@ -1,27 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * Payment Schema
- * Represents a payment made toward an invoice
- * Supports partial payments and payment tracking
- * 
- * Converted from SQLite table:
- * CREATE TABLE payments (
- *   id TEXT PRIMARY KEY,
- *   invoice_id TEXT NOT NULL,
- *   amount_cents INTEGER NOT NULL,
- *   status TEXT DEFAULT 'pending',
- *   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
- * )
- * 
- * Changes in MongoDB:
- * - invoice_id becomes invoiceId with ObjectId reference
- * - amount_cents becomes amountCents (kept as integer in cents)
- * - status now uses enum for validation (PENDING, COMPLETED, FAILED)
- * - Automatic timestamps for tracking when payment was made
- * - Index on invoiceId for fast lookups
- * - Index on status for filtering payments
- */
 const paymentSchema = new mongoose.Schema(
   {
     // Reference to the invoice being paid
@@ -43,10 +21,6 @@ const paymentSchema = new mongoose.Schema(
       set: (v) => Math.floor(v),
     },
 
-    // Payment status: PENDING, COMPLETED, or FAILED
-    // PENDING: Payment initiated but not yet confirmed
-    // COMPLETED: Payment successfully processed
-    // FAILED: Payment processing failed
     status: {
       type: String,
       enum: ['PENDING', 'COMPLETED', 'FAILED'],

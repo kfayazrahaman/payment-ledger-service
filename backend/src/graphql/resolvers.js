@@ -1,30 +1,3 @@
-/**
- * GraphQL Resolvers - Mongoose Version
- *
- * Resolvers connect GraphQL queries and mutations to business logic services.
- * Each resolver calls the appropriate service function and transforms the response.
- *
- * Key Changes from SQLite Version:
- * - Mongoose models use camelCase field names (_id, createdAt, amountCents, etc.)
- * - No need for manual id generation (MongoDB does it)
- * - Virtual properties (balance, remaining) are computed automatically
- * - Direct field access without mapping (mostly)
- * - Better error handling with Mongoose validation
- *
- * Field Name Mappings (SQLite → Mongoose):
- * - balance_cents → balance (virtual property)
- * - created_at → createdAt (auto-timestamp)
- * - debit_account_id → debitAccountId (ObjectId ref)
- * - credit_account_id → creditAccountId (ObjectId ref)
- * - amount_cents → amountCents (integer, same purpose)
- * - invoice_number → invoiceNumber
- * - account_id → accountId
- * - due_date → dueDate
- * - total_cents → totalCents
- * - paid_cents → paidCents
- * - invoice_id → invoiceId
- * - id → _id (MongoDB ObjectId)
- */
 
 import {
   createAccount,
@@ -338,7 +311,7 @@ export const resolvers = {
           lineItems,
         );
 
-        console.log("✅ Invoice created:", invoice);
+        console.log("Invoice created:", invoice);
         return {
           id: invoice._id.toString(),
           invoiceNumber: invoice?.invoiceNumber,

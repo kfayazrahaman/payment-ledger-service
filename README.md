@@ -2,27 +2,23 @@
 
 A full-stack fintech application implementing a double-entry accounting ledger system with invoice management and payment processing. Built for a Transportation Management System (TMS) Accounts Payable module.
 
-## 📋 Project Overview
+## ✨ Key Features
 
-This is a **Mini Payment Ledger & Invoice Service** designed to demonstrate core fintech principles:
+-   **Double-Entry Accounting**: Industry-standard ledger system where every transaction has a corresponding debit and credit, ensuring the books are always balanced.
+-   **Stateless Balance Calculation**: Account balances are calculated in real-time from the transaction log, providing a single source of truth and a complete audit trail.
+-   **Invoice Management**: Create and manage invoices with line items, track status (`DRAFT`, `SENT`, `PAID`, `OVERDUE`), and handle partial payments.
+-   **Payment Validation**: Robust validation to prevent overpayments and detect duplicate payment submissions within a short time window.
+-   **Monetary Precision**: All financial values are stored as integers in cents to eliminate floating-point rounding errors.
 
-### ✅ Part 1: Core Ledger System
-- ✓ Double-entry accounting (every debit has a corresponding credit)
-- ✓ Account creation and transaction recording
-- ✓ Balances derived from transaction logs (never stored as mutable state)
-- ✓ Monetary amounts stored in cents to prevent floating-point errors
+## 🛠️ Technology Stack
 
-### ✅ Part 2: Invoice Management
-- ✓ Invoice creation with line items
-- ✓ Invoice status flow: draft → sent → paid → overdue
-- ✓ Partial payment support
-- ✓ Overpayment prevention
-- ✓ Duplicate payment detection (edge case handled)
+-   **Backend**: Node.js, Express, Apollo Server (GraphQL), Mongoose
+-   **Frontend**: React, Axios
+-   **Database**: MongoDB
 
-### ✅ Part 3: Edge Case Challenge
-- **Selected: Duplicate Payment Prevention** - The system detects and prevents duplicate payments within a 5-second window
+## 🏗️ Architecture & Folder Structure
 
-## 🏗️ Architecture
+The project is organized into two main parts: a backend service and a frontend application.
 
 ```
 payment-ledger-service/
@@ -235,45 +231,7 @@ mutation {
 }
 ```
 
-## 🏦 Database Schema
-
-### Accounts
-```sql
-CREATE TABLE accounts (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL,
-  balance_cents INTEGER DEFAULT 0,
-  created_at DATETIME
-)
-```
-
-### Transactions (Double-Entry Ledger)
-```sql
-CREATE TABLE transactions (
-  id TEXT PRIMARY KEY,
-  debit_account_id TEXT NOT NULL,
-  credit_account_id TEXT NOT NULL,
-  amount_cents INTEGER NOT NULL,
-  description TEXT,
-  created_at DATETIME
-)
-```
-
-### Invoices
-```sql
-CREATE TABLE invoices (
-  id TEXT PRIMARY KEY,
-  invoice_number TEXT UNIQUE NOT NULL,
-  account_id TEXT NOT NULL,
-  status TEXT DEFAULT 'draft',
-  total_cents INTEGER NOT NULL,
-  paid_cents INTEGER DEFAULT 0,
-  created_at DATETIME
-)
-```
-
-## 🎯 Edge Cases Handled
+##  Edge Cases Handled
 
 ### ✅ Duplicate Payment Prevention
 - Tracks payments within a 5-second window
@@ -329,21 +287,19 @@ CREATE TABLE invoices (
 
 ## ⚡ Performance & Scalability
 
-- **SQLite**: In-memory database for rapid testing, can be switched to PostgreSQL
-- **GraphQL**: Efficient querying with only needed fields
-- **Indexes**: Transaction queries indexed on account IDs
-- **Balance Caching**: Can be added at resolver level for frequently accessed accounts
+- **MongoDB**: Flexible and scalable document database.
+- **Indexes**: Mongoose schemas define indexes on frequently queried fields.
 
 ## 📝 Design Decisions
 
 | Decision | Reason |
 |----------|--------|
-| Double-Entry Ledger | Industry standard for accounting, ensures balance |
-| Amounts in Cents | Eliminates floating-point errors in financial calculations |
-| Balance Calculation | On-demand from logs ensures audit trail integrity |
-| SQLite | Quick setup, easy to test locally, can scale to PostgreSQL |
-| GraphQL | Type-safe, efficient queries, reduces over-fetching |
-| React Frontend | Modern UI, real-time updates, component reusability |
+| Double-Entry Ledger  | Industry standard for accounting, ensures balance |
+| Amounts in Cents      | Eliminates floating-point errors in financial calculations |
+| Balance Calculation   | On-demand from logs ensures audit trail integrity |
+| MongoDB (Mongoose)    | Scalable, flexible schema, powerful queries |
+| GraphQL               | Type-safe, efficient queries, reduces over-fetching |
+| React Frontend        | Modern UI, real-time updates, component reusability |
 
 ## 🚫 What Was Prioritized Over Completeness
 
@@ -379,25 +335,15 @@ To deploy this application:
 
 1. **Backend**: Deploy Node.js server to hosting (Heroku, AWS, DigitalOcean)
 2. **Frontend**: Build and deploy to CDN (Vercel, Netlify, AWS S3 + CloudFront)
-3. **Database**: Migrate to PostgreSQL for production
+3. **Database**: Use a managed MongoDB service like Atlas for production.
 4. **API**: Add rate limiting and CORS configuration
 
 ## 🐛 Troubleshooting
 
 ### Port already in use
 ```bash
-# Kill process on port 4000 (backend)
-npx kill-port 4000
-
-# Frontend uses 3000 by default, can configure in .env
-```
-
-### Database errors
-```bash
-# Reset database
-rm data/ledger.db
-
-# Backend will recreate on next start
+# Kill process on port 6500 (backend)
+npx kill-port 6500
 ```
 
 ### CORS issues

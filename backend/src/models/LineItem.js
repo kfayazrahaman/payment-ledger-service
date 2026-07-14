@@ -1,26 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * Invoice Line Item Schema
- * Represents a single line item on an invoice
- * Multiple line items make up a complete invoice
- * 
- * Converted from SQLite table:
- * CREATE TABLE invoice_line_items (
- *   id TEXT PRIMARY KEY,
- *   invoice_id TEXT NOT NULL,
- *   description TEXT NOT NULL,
- *   amount_cents INTEGER NOT NULL,
- *   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
- * )
- * 
- * Changes in MongoDB:
- * - invoice_id becomes invoiceId with ObjectId reference
- * - amount_cents becomes amountCents (kept as integer in cents)
- * - Automatic timestamps
- * - Embedded in Invoice document instead of separate collection
- *   (Could be used as sub-schema for better performance)
- */
 const lineItemSchema = new mongoose.Schema(
   {
     // Reference to the parent invoice
