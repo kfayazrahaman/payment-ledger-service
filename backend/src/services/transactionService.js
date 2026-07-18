@@ -4,7 +4,8 @@ export async function createTransaction(
   debitAccountId,
   creditAccountId,
   amountCents,
-  description = null
+  description = null,
+  options = {}
 ) {
   try {
     // Additional validation before database operation
@@ -19,13 +20,17 @@ export async function createTransaction(
 
     // Create transaction
     // Mongoose schema pre-save hook also checks debit ≠ credit
-    const transaction = await Transaction.create({
+    const transactionData = {
       debitAccountId,
       creditAccountId,
       amountCents: Math.floor(amountCents), // Ensure integer
       description: description ? description.trim() : null,
-    });
+    };
 
+    // Use create with an array to pass session options
+    const [transaction] = await Transaction.create([transactionData], {
+      session: options.session,
+    });
     console.log(
       `Transaction recorded: $${(amountCents / 100).toFixed(2)} from ${debitAccountId} to ${creditAccountId}`
     );

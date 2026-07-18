@@ -1,4 +1,4 @@
-
+import mongoose from 'mongoose';
 import { createTransaction } from './transactionService.js';
 import { getInvoice, updateInvoiceStatus } from './invoiceService.js';
 import Invoice from '../models/Invoice.js';
@@ -8,9 +8,14 @@ export async function createRefundTransaction(
   amountCents,
   cashAccountId = null
 ) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     // Step 1: Fetch the invoice
-    const invoice = await getInvoice(invoiceId);
+    // NOTE: For a transaction to be fully isolated, reads should also use the session.
+    // This would require modifying getInvoice to accept and use the session.
+    const invoice = await getInvoice(invoiceId, { session });
     if (!invoice) {
       throw new Error(`Invoice not found: ${invoiceId}`);
     }
@@ -52,7 +57,8 @@ export async function createRefundTransaction(
       invoice.accountId, // Debit: Customer account (liability decreases)
       cashAccountId || invoice.accountId, // Credit: Cash account (or customer if not specified)
       amountCents,
-      `REFUND: Invoice ${invoice.invoiceNumber} - Reverse payment`
+      `REFUND: Invoice ${invoice.invoiceNumber} - Reverse payment`,
+      { session }
     );
 
     console.log(`Refund transaction created`);
@@ -61,7 +67,7 @@ export async function createRefundTransaction(
     const updatedInvoice = await Invoice.findByIdAndUpdate(
       invoiceId,
       { $inc: { paidCents: -amountCents } }, // Negative increment to decrease
-      { new: true }
+      { new: true, session }
     );
 
     console.log(
@@ -73,16 +79,25 @@ export async function createRefundTransaction(
 
     if (remainingDue > 0) {
       // If there's remaining balance due, set status to SENT
-      await updateInvoiceStatus(invoiceId, 'SENT');
+      // NOTE: updateInvoiceStatus would also need to be modified to accept and use the session.
+      await updateInvoiceStatus(invoiceId, 'SENT', { session });
       console.log(
         `Invoice status updated to SENT (remaining due: $${(remainingDue / 100).toFixed(2)})`
       );
     }
 
+    // If all steps succeeded, commit the transaction
+    await session.commitTransaction();
+
     return refundTransaction;
   } catch (error) {
-    console.error(`Refund processing failed: ${error.message}`);
+    // If any step fails, abort (roll back) the entire transaction
+    await session.abortTransaction();
+    console.error(`Refund processing failed and transaction was rolled back: ${error.message}`);
     throw error;
+  } finally {
+    // Always end the session when the operation is complete
+    session.endSession();
   }
 }
 

@@ -1,6 +1,7 @@
 
 import Invoice from '../models/Invoice.js';
 import LineItem from '../models/LineItem.js';
+import mongoose from '../config/database.js';
 
 export async function createInvoice(
   invoiceNumber,
@@ -8,30 +9,32 @@ export async function createInvoice(
   dueDate = null,
   lineItems = []
 ) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     // Calculate total from line items
-    // Amount field in the input is already in cents
     const totalCents = lineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
 
     if (totalCents <= 0) {
       throw new Error('Invoice total must be greater than zero');
     }
 
-    // Create invoice document
-    const invoice = await Invoice.create({
+    // Create invoice document within session
+    const [invoice] = await Invoice.create([{
       invoiceNumber: invoiceNumber?.trim()?.toUpperCase(),
       accountId,
       dueDate: dueDate ? new Date(dueDate) : null,
       totalCents: Math.floor(totalCents || 0),
       paidCents: 0,
       status: 'DRAFT',
-    });
+    }], { session });
 
     console.log(
       `Invoice created: ${invoiceNumber} - $${(totalCents / 100).toFixed(2)}`
     );
 
-    // Create line items for this invoice
+    // Create line items for this invoice within session
     if (lineItems.length > 0) {
       const lineItemDocs = lineItems.map((item) => ({
         invoiceId: invoice?._id,
@@ -39,14 +42,19 @@ export async function createInvoice(
         amountCents: Math.floor(item?.amount || 0),
       }));
 
-      // Insert all line items in one batch operation
-      await LineItem.insertMany(lineItemDocs);
+      await LineItem.insertMany(lineItemDocs, { session });
       console.log(`${lineItems.length} line items added to invoice`);
     }
+
+    await session.commitTransaction();
+    session.endSession();
 
     // Fetch invoice with line items populated
     return getInvoice(invoice?._id);
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    
     // Handle specific validation errors
     console.log("error object",error)
     if (error.name === 'ValidationError') {
@@ -121,15 +129,18 @@ export async function getAllInvoices(status = null) {
   }
 }
 
-export async function updateInvoiceStatus(invoiceId, status) {
+export async function updateInvoiceStatus(invoiceId, status, session = null) {
   try {
     // findByIdAndUpdate modifies document and returns it
     // { new: true } returns updated document
     // { runValidators: true } validates against schema
+    const options = { new: true, runValidators: true };
+    if (session) options.session = session;
+
     const invoice = await Invoice.findByIdAndUpdate(
       invoiceId,
       { status: status.toUpperCase() },
-      { new: true, runValidators: true }
+      options
     )
       .populate('accountId', 'name')
       .lean();

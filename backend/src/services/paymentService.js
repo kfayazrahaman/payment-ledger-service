@@ -1,10 +1,9 @@
 
 import Payment from '../models/Payment.js';
 import Invoice from '../models/Invoice.js';
+import mongoose from '../config/database.js';
 import {
   getInvoice,
-  getInvoicePaidAmount,
-  updateInvoicePaidAmount,
   updateInvoiceStatus,
 } from './invoiceService.js';
 
@@ -12,16 +11,17 @@ export async function createPayment(
   invoiceId,
   amountCents,
   status = 'PENDING',
-  transactionId = null
+  transactionId = null,
+  session = null
 ) {
   try {
     // Create payment record
-    const payment = await Payment.create({
+    const [payment] = await Payment.create([{
       invoiceId,
       amountCents: Math.floor(amountCents),
       status: status.toUpperCase(),
       transactionId,
-    });
+    }], { session });
 
     console.log(
       ` Payment created: $${(amountCents / 100).toFixed(2)} - Status: ${status}`
@@ -34,26 +34,6 @@ export async function createPayment(
         .map((err) => err.message)
         .join(', ');
       throw new Error(`Payment validation failed: ${messages}`);
-    }
-    throw error;
-  }
-}
-
-export async function getPayment(id) {
-  try {
-    const payment = await Payment.findById(id)
-      .populate('invoiceId', 'invoiceNumber totalCents')
-      .populate('transactionId', 'description amountCents');
-
-    if (!payment) {
-      console.warn(`Payment not found: ${id}`);
-      return null;
-    }
-
-    return payment;
-  } catch (error) {
-    if (error.name === 'CastError') {
-      throw new Error(`Invalid payment ID format: ${id}`);
     }
     throw error;
   }
@@ -76,6 +56,9 @@ export async function getPaymentsForInvoice(invoiceId) {
 }
 
 export async function applyPaymentToInvoice(invoiceId, amountCents) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     // Step 1: Fetch invoice
     const invoice = await getInvoice(invoiceId);
@@ -105,14 +88,12 @@ export async function applyPaymentToInvoice(invoiceId, amountCents) {
     }
 
     // Step 5: Check for duplicate payments (within last 5 seconds)
-    // This prevents duplicate webhook fires from creating duplicate payments
     const recentPayments = await Payment.find({
       invoiceId,
-      // Only check payments created in last 5 seconds
       createdAt: {
         $gt: new Date(Date.now() - 5000),
       },
-    });
+    }).session(session);
 
     for (const payment of recentPayments) {
       if (payment.amountCents === amountCents && payment.status === 'COMPLETED') {
@@ -126,25 +107,29 @@ export async function applyPaymentToInvoice(invoiceId, amountCents) {
     }
 
     // Step 6: Create payment record
-    const payment = await createPayment(invoiceId, amountCents, 'COMPLETED');
+    const payment = await createPayment(invoiceId, amountCents, 'COMPLETED', null, session);
 
     // Step 7: Update invoice paid amount
     const updatedInvoice = await Invoice.findByIdAndUpdate(
       invoiceId,
       { $inc: { paidCents: amountCents } },
-      { new: true }
+      { new: true, session }
     );
 
-    console.log(`Invoice paid amount updated. Remaining: $${(updatedInvoice.remainingCents / 100).toFixed(2)}`);
+    console.log(`Invoice paid amount updated. Remaining: $${((updatedInvoice.totalCents - updatedInvoice.paidCents) / 100).toFixed(2)}`);
 
     // Step 8: Update invoice status if fully paid
     if (updatedInvoice.paidCents >= updatedInvoice.totalCents) {
-      await updateInvoiceStatus(invoiceId, 'PAID');
+      await updateInvoiceStatus(invoiceId, 'PAID', session);
       console.log(`Invoice ${invoice.invoiceNumber} is now PAID`);
     }
 
+    await session.commitTransaction();
+    session.endSession();
     return payment;
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     console.error(`Payment processing failed: ${error.message}`);
     throw error;
   }

@@ -6,26 +6,19 @@ import dns from "node:dns";
 // Load environment variables from .env file
 dotenv.config();
 
-/**
- * MongoDB Connection Configuration
- * This module handles the connection to MongoDB Atlas using Mongoose
- * 
- * Key Differences from SQLite:
- * - Uses MongoDB Atlas for cloud-hosted database
- * - Mongoose provides ORM-like functionality with schemas
- * - Supports automatic schema validation
- * - Handles connection pooling automatically
- */ 
-
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 console.log(dns.getServers());
 
 // Get MongoDB connection string from environment variables
-const MONGODB_URI = process.env.DB_CONNECTION_STRING;
+const isTestEnv = process.env.NODE_ENV === 'test';
+const MONGODB_URI = isTestEnv
+  ? process.env.TEST_DB_CONNECTION_STRING
+  : process.env.DB_CONNECTION_STRING;
 
 if (!MONGODB_URI) {
-  throw new Error('DB_CONNECTION_STRING environment variable is not defined');
+  const varName = isTestEnv ? 'TEST_DB_CONNECTION_STRING' : 'DB_CONNECTION_STRING';
+  throw new Error(`${varName} environment variable is not defined`);
 }
 
 /**
